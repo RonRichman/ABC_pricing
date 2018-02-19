@@ -172,22 +172,28 @@ claims[,lr_bin :=ntile(LR,9)]
 claims[,id:=paste0(freq_bin, sev_bin, sev_sd_bin, lr_bin)]
 
 claims[,excess:=9845]
-claims$prem_9845 = ddply(claims, .(run), compound)$V1/LR/12
+claims$prem_9845 = ddply(claims, .(run), compound)$V1
+claims[,prem_9845 :=prem_9845/LR/12]
 
 claims[,excess:=7620]
-claims$prem_7620 = ddply(claims, .(run), compound)$V1/LR/12
+claims$prem_7620 = ddply(claims, .(run), compound)$V1
+claims[,prem_7620 :=prem_7620/LR/12]
 
 claims[,excess:=4840]
-claims$prem_4840 = ddply(claims, .(run), compound)$V1/LR/12
+claims$prem_4840 = ddply(claims, .(run), compound)$V1
+claims[,prem_4840 :=prem_4840/LR/12]
 
 claims[,excess:=4580]
-claims$prem_4580 = ddply(claims, .(run), compound)$V1/LR/12
+claims$prem_4580 = ddply(claims, .(run), compound)$V1
+claims[,prem_4580 :=prem_4580/LR/12]
 
 claims[,excess:=3920]
-claims$prem_3920 = ddply(claims, .(run), compound)$V1/LR/12
+claims$prem_3920 = ddply(claims, .(run), compound)$V1
+claims[,prem_3920 :=prem_3920/LR/12]
 
 claims[,excess:=4515]
-claims$prem_4515 = ddply(claims, .(run), compound)$V1/LR/12
+claims$prem_4515 = ddply(claims, .(run), compound)$V1
+claims[,prem_4515 :=prem_4515/LR/12]
 
 claims_melt = claims %>% melt(measure.vars = c("prem_9845", "prem_7620", "prem_4840", 
                                               "prem_4580", "prem_3920", "prem_4515")) %>% data.table()
@@ -237,3 +243,13 @@ ggplot()+geom_point(data=results, aes(x = variable, y = Premium))+
   geom_point(data=results, aes(x = variable, y = mean, colour = "red"))+
   scale_color_discrete(guide=F)
 ggsave("c:/r/prices.jpg", device = "jpg")
+
+### individual policies
+
+ind_pol_results = claims_melt[id %in% reasonable$id] %>% setkey(variable)
+ind_pol_prems = results[,.(premiums = first(mean)),keyby=variable]
+
+ind_pol_results = merge(ind_pol_results,ind_pol_prems)
+ind_pol_results[,LRs:=value/premiums*LR]
+ind_pol_results[,mean(LRs), keyby= variable]
+ind_pol_results %>% ggplot(aes(x=LRs))+geom_density(aes(fill = variable))+facet_wrap(~variable, scales = "free")
